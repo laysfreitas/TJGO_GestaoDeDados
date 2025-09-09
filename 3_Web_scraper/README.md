@@ -10,7 +10,6 @@ Este projeto contém dois scripts para coleta automatizada de dados:
     ```bash
     pip install -r requirements.txt
     ```
-    *(Nota: Crie um arquivo `requirements.txt` com o conteúdo: `requests` e `beautifulsoup4`)*
 
 2.  **Configurar a API Key:**
     No arquivo `client_api_meteorologia.py`, substitua o valor da variável `API_KEY` pela sua chave obtida no site OpenWeatherMap.
