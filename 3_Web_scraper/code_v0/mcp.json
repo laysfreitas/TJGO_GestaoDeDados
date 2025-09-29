@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "web-scraper": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-web-scraper"],
+      "env": {
+        "MCP_WEB_SCRAPER_MAX_REQUESTS_PER_MINUTE": "30"
+      }
+    },
+    "api-client": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-api-client"],
+      "env": {
+        "MCP_API_CLIENT_ALLOWED_HOSTS": "api.exchangerate.host"
+      }
+    }
+  }
+}
