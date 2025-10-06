@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Pareceres - Natjus{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Histórico de Pareceres</h1>
+    <p class="text-gray-600 mt-2">Consulte o histórico completo de todos os pareceres do sistema</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <form method="GET" action="{{ url_for('historico') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Buscar por Nº do Processo</label>
+            <input type="text" name="search" value="{{ search }}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   placeholder="Digite o número do processo">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Status</label>
+            <select name="status_filter" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Todos os status</option>
+                <option value="INICIADO" {% if status_filter == 'INICIADO' %}selected{% endif %}>Iniciado</option>
+                <option value="ELABORACAO" {% if status_filter == 'ELABORACAO' %}selected{% endif %}>Em elaboração</option>
+                <option value="REVISAO" {% if status_filter == 'REVISAO' %}selected{% endif %}>Em revisão</option>
+                <option value="PRONTO_ENVIO" {% if status_filter == 'PRONTO_ENVIO' %}selected{% endif %}>Pronto para envio</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Parecerista</label>
+            <select name="parecerista_filter" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Todos os pareceristas</option>
+                {% for usuario in usuarios %}
+                <option value="{{ usuario.id }}" {% if parecerista_filter == usuario.id|string %}selected{% endif %}>
+                    {{ usuario.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Data Início</label>
+            <input type="date" name="dt_inicio" value="{{ dt_inicio }}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Data Fim</label>
+            <input type="date" name="dt_fim" value="{{ dt_fim }}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex items-end">
+            <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nº do Processo
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data de Recebimento
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data de Envio
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status Atual
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Revisor
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Última Atualização
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% if pareceres %}
+                    {% for parecer in pareceres %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ parecer.n_processo or '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if parecer.dt_recebimento %}
+                                {{ parecer.dt_recebimento.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if parecer.dt_envio %}
+                                {{ parecer.dt_envio.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% set stage_colors = {
+                                StatusFormulario.INICIADO: 'bg-gray-100 text-gray-800',
+                                StatusFormulario.ELABORACAO: 'bg-yellow-100 text-yellow-800',
+                                StatusFormulario.REVISAO: 'bg-blue-100 text-blue-800',
+                                StatusFormulario.PRONTO_ENVIO: 'bg-green-100 text-green-800'
+                            } %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ stage_colors[parecer.status_formulario] }}">
+                                {{ parecer.STAGE_LABELS[parecer.status_formulario] }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ parecer.revisor.nome if parecer.revisor else '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if parecer.updated_at %}
+                                {{ parecer.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{{ url_for('visualizar_parecer', parecer_id=parecer.id) }}" 
+                               class="text-blue-600 hover:text-blue-900">Ver</a>
+                            {% if parecer.nota_tecnica_pdf %}
+                            <a href="{{ url_for('download_pdf', parecer_id=parecer.id) }}" 
+                               class="ml-2 text-green-600 hover:text-green-900" title="Download PDF">
+                                📄
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p class="text-lg font-medium">Nenhum parecer encontrado</p>
+                                <p class="text-sm mt-2">Ajuste os filtros para visualizar mais resultados</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if pagination.pages > 1 %}
+    <div class="px-6 py-4 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Mostrando <span class="font-medium">{{ (pagination.page - 1) * pagination.per_page + 1 }}</span>
+                a <span class="font-medium">{{ min(pagination.page * pagination.per_page, pagination.total) }}</span>
+                de <span class="font-medium">{{ pagination.total }}</span> resultados
+            </div>
+            <div class="flex space-x-2">
+                {% if pagination.has_prev %}
+                <a href="?search={{ search }}&status_filter={{ status_filter }}&parecerista_filter={{ parecerista_filter }}&dt_inicio={{ dt_inicio }}&dt_fim={{ dt_fim }}&page={{ pagination.prev_num }}" 
+                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Anterior
+                </a>
+                {% endif %}
+                
+                {% for page_num in range(1, pagination.pages + 1) %}
+                    {% if page_num == pagination.page %}
+                    <span class="px-3 py-2 border border-blue-500 rounded-lg text-sm font-medium text-white bg-blue-600">
+                        {{ page_num }}
+                    </span>
+                    {% elif page_num <= 3 or page_num > pagination.pages - 3 or (page_num >= pagination.page - 1 and page_num <= pagination.page + 1) %}
+                    <a href="?search={{ search }}&status_filter={{ status_filter }}&parecerista_filter={{ parecerista_filter }}&dt_inicio={{ dt_inicio }}&dt_fim={{ dt_fim }}&page={{ page_num }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        {{ page_num }}
+                    </a>
+                    {% elif page_num == 4 or page_num == pagination.pages - 3 %}
+                    <span class="px-3 py-2 text-sm font-medium text-gray-700">...</span>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                <a href="?search={{ search }}&status_filter={{ status_filter }}&parecerista_filter={{ parecerista_filter }}&dt_inicio={{ dt_inicio }}&dt_fim={{ dt_fim }}&page={{ pagination.next_num }}" 
+                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Próximo
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

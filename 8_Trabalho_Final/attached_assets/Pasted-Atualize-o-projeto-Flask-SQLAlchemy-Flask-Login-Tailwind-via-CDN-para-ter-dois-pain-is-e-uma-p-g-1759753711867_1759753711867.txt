@@ -1,0 +1,41 @@
+Atualize o projeto Flask (SQLAlchemy, Flask-Login, Tailwind via CDN) para ter dois painéis e uma página de histórico:
+
+Painel Geral (/dashboard): acessível a Admin e Administrativo, lista TODOS os pareceres de todos os status (INICIADO, ELABORACAO, REVISAO, PRONTO_ENVIO) com busca por Nº do Processo, filtro por status e paginação; mantém as colunas Nº do Processo, Data de Recebimento, Prazo, Parecerista Elaborador, Status e ações “Ver/Editar/Avançar/Voltar” respeitando can_edit_stage.
+
+Painel do Parecerista (/meus-pareceres): acessível a Parecerista e Admin, exibe apenas os pareceres que o usuário parecerista pode editar conforme as regras já implementadas (status em ELABORACAO e REVISAO; se houver campo de vinculação do elaborador/revisor, filtre também por id_revisor == current_user.id OU responsável_elaboração == current_user.id quando aplicável). A tabela tem as mesmas colunas do Painel Geral, porém só mostra botões de ação permitidos ao perfil parecerista.
+
+Histórico de Pareceres (/historico): acessível a qualquer usuário autenticado, lista todos os pareceres de todos os status em ordem mais recentes primeiro, com filtros de período (data de recebimento/de envio), status, nº do processo e parecerista. Cada linha mostra: Nº do Processo, Data (recebimento ou envio, conforme disponível), Status atual, Parecerista Elaborador, Revisor (se houver), e links “Ver”.
+
+Requisitos de implementação:
+
+Rotas: criar @app.route("/dashboard"), @app.route("/meus-pareceres"), @app.route("/historico"). Em cada rota, aplique autorização:
+
+/dashboard: login_required e if not (current_user.is_admin() or current_user.is_administrativo()): abort(403)
+
+/meus-pareceres: login_required e if not (current_user.is_admin() or current_user.is_parecerista()): abort(403)
+
+/historico: login_required.
+
+Consultas SQLAlchemy:
+
+Geral: query = Formulario.query com filtros opcionais por status/nº processo; paginação (ex.: page, per_page = request.args.get("page", 1, int), 20).
+
+Parecerista: query = Formulario.query.filter(Formulario.status_formulario.in_(["ELABORACAO","REVISAO"])) e, se existir vínculo de autoria/revisão, filtre por or_(Formulario.id_revisor==current_user.id, Formulario.id_elaborador==current_user.id); caso não exista, mantenha apenas o filtro por status.
+
+Histórico: query = Formulario.query.order_by(Formulario.updated_at.desc().nullslast(), Formulario.id.desc()) com filtros de período e status.
+
+Templates: criar templates/painel_geral.html, templates/painel_parecerista.html, templates/historico.html (herdando base.html) com a tabela responsiva e os mesmos headers de coluna; incluir na navbar/header botões: “Painel” (aponta para /dashboard se Admin/Administrativo; se Parecerista logado, pode mostrar também link “Meu Painel”), “Meu Painel (Parecerista)” (para pareceristas), “Histórico de Pareceres” (todos os logados) e “+ Novo Formulário” (apenas Admin/Administrativo).
+
+Ações e Permissões de UI: em cada linha, mostre botões conforme current_user.is_authenticated and current_user.can_edit_stage(f.status_formulario); no painel do parecerista, o botão Avançar/Salvar só aparece nos status permitidos.
+
+Busca/Filtros: inputs no topo (nº do processo, select de status, datas início/fim no histórico) e submit GET; preserve parâmetros na paginação.
+
+Testes de autorização: unitário simples nas views (403 quando não autorizado).
+
+README: documentar o novo fluxo, as URLs (/dashboard, /meus-pareceres, /historico), quem enxerga o quê e como funcionam os filtros/paginação.
+
+Extras (se possível):
+
+Adicionar coluna “Última atualização” e um badge de status com cores.
+
+Se existir anexo_nota_tecnica_id, mostrar ícone/link de download na tabela quando houver PDF.

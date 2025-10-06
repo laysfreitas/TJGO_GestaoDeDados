@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro - Natjus{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-8">
+    <div class="bg-white shadow-lg rounded-lg p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Cadastro</h2>
+        
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="mb-4">
+                <label for="nome" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nome completo
+                </label>
+                <input type="text" 
+                       id="nome" 
+                       name="nome" 
+                       required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Seu nome completo">
+            </div>
+            
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                </label>
+                <input type="email" 
+                       id="email" 
+                       name="email" 
+                       required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="seu@email.com">
+            </div>
+            
+            <div class="mb-4">
+                <label for="senha" class="block text-sm font-medium text-gray-700 mb-2">
+                    Senha
+                </label>
+                <input type="password" 
+                       id="senha" 
+                       name="senha" 
+                       required
+                       minlength="6"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Mínimo 6 caracteres">
+            </div>
+            
+            <div class="mb-4">
+                <label for="senha_confirm" class="block text-sm font-medium text-gray-700 mb-2">
+                    Confirmar senha
+                </label>
+                <input type="password" 
+                       id="senha_confirm" 
+                       name="senha_confirm" 
+                       required
+                       minlength="6"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Digite a senha novamente">
+            </div>
+            
+            <div class="mb-6">
+                <label for="perfil_id" class="block text-sm font-medium text-gray-700 mb-2">
+                    Perfil
+                </label>
+                <select id="perfil_id" 
+                        name="perfil_id" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Selecione um perfil</option>
+                    {% for perfil in perfis %}
+                    <option value="{{ perfil.id }}">{{ perfil.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-semibold">
+                Cadastrar
+            </button>
+        </form>
+        
+        <div class="mt-4 text-center">
+            <p class="text-gray-600">
+                Já tem uma conta? 
+                <a href="{{ url_for('login') }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Faça login
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

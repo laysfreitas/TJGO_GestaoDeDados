@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Visualizar Parecer - Natjus{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-start">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Parecer #{{ parecer.id }}</h1>
+        <p class="text-gray-600 mt-2">Nº do Processo: <span class="font-semibold">{{ parecer.n_processo or 'Não informado' }}</span></p>
+    </div>
+    <div>
+        {% set stage_colors = {
+            StatusFormulario.INICIADO: 'bg-gray-100 text-gray-800',
+            StatusFormulario.ELABORACAO: 'bg-yellow-100 text-yellow-800',
+            StatusFormulario.REVISAO: 'bg-blue-100 text-blue-800',
+            StatusFormulario.PRONTO_ENVIO: 'bg-green-100 text-green-800'
+        } %}
+        <span class="px-4 py-2 rounded-full text-sm font-medium {{ stage_colors[parecer.status_formulario] }}">
+            {{ parecer.STAGE_LABELS[parecer.status_formulario] }}
+        </span>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Dados Iniciais</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="text-sm font-medium text-gray-500">Nº do Processo</label>
+            <p class="text-gray-900">{{ parecer.n_processo or '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Interessado</label>
+            <p class="text-gray-900">{{ parecer.interessado or '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Magistrado</label>
+            <p class="text-gray-900">{{ parecer.magistrado or '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Comarca</label>
+            <p class="text-gray-900">{{ parecer.comarca or '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Serventia</label>
+            <p class="text-gray-900">{{ parecer.serventia or '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Data de Despacho</label>
+            <p class="text-gray-900">{{ parecer.dt_despacho.strftime('%d/%m/%Y') if parecer.dt_despacho else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Data de Encaminhamento</label>
+            <p class="text-gray-900">{{ parecer.dt_encaminhamento.strftime('%d/%m/%Y') if parecer.dt_encaminhamento else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Hora de Encaminhamento</label>
+            <p class="text-gray-900">{{ parecer.hr_encaminhamento.strftime('%H:%M') if parecer.hr_encaminhamento else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Data de Recebimento</label>
+            <p class="text-gray-900">{{ parecer.dt_recebimento.strftime('%d/%m/%Y') if parecer.dt_recebimento else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Hora de Recebimento</label>
+            <p class="text-gray-900">{{ parecer.hr_recebimento.strftime('%H:%M') if parecer.hr_recebimento else '-' }}</p>
+        </div>
+    </div>
+</div>
+
+{% if parecer.status_formulario.value in ['ELABORACAO', 'REVISAO', 'PRONTO_ENVIO'] %}
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Dados de Elaboração</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="text-sm font-medium text-gray-500">Prazo</label>
+            <p class="text-gray-900">{{ parecer.prazo.nome if parecer.prazo else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Parecerista Elaborador</label>
+            <p class="text-gray-900">{{ parecer.elaborador.nome if parecer.elaborador else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Quantidade de Objetos</label>
+            <p class="text-gray-900">{{ parecer.qt_objetos if parecer.qt_objetos is not none else '-' }}</p>
+        </div>
+        <div class="col-span-2">
+            <label class="text-sm font-medium text-gray-500">Nota Técnica</label>
+            <p class="text-gray-900 whitespace-pre-wrap">{{ parecer.nota_tecnica or '-' }}</p>
+        </div>
+        <div class="col-span-2">
+            <label class="text-sm font-medium text-gray-500">PDF da Nota Técnica</label>
+            {% if parecer.nota_tecnica_pdf %}
+            <div class="mt-1">
+                <a href="{{ url_for('download_pdf', parecer_id=parecer.id) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    📄 Baixar PDF
+                </a>
+            </div>
+            {% else %}
+            <p class="text-gray-500 mt-1">Sem PDF</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if parecer.status_formulario.value in ['REVISAO', 'PRONTO_ENVIO'] %}
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Dados de Revisão</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="text-sm font-medium text-gray-500">Revisor</label>
+            <p class="text-gray-900">{{ parecer.revisor.nome if parecer.revisor else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Data de Revisão</label>
+            <p class="text-gray-900">{{ parecer.dt_revisao.strftime('%d/%m/%Y') if parecer.dt_revisao else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Hora de Revisão</label>
+            <p class="text-gray-900">{{ parecer.hr_revisao.strftime('%H:%M') if parecer.hr_revisao else '-' }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if parecer.status_formulario == StatusFormulario.PRONTO_ENVIO %}
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Dados de Envio</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="text-sm font-medium text-gray-500">Responsável pelo Envio</label>
+            <p class="text-gray-900">{{ parecer.responsavel_envio.nome if parecer.responsavel_envio else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Data de Envio</label>
+            <p class="text-gray-900">{{ parecer.dt_envio.strftime('%d/%m/%Y') if parecer.dt_envio else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Hora de Envio</label>
+            <p class="text-gray-900">{{ parecer.hr_envio.strftime('%H:%M') if parecer.hr_envio else '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Forma de Envio</label>
+            <p class="text-gray-900">{{ parecer.forma_envio or '-' }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Email para Envio</label>
+            <p class="text-gray-900">{{ parecer.forma_envio_email or '-' }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Informações do Sistema</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="text-sm font-medium text-gray-500">Criado em</label>
+            <p class="text-gray-900">{{ parecer.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-500">Última atualização</label>
+            <p class="text-gray-900">{{ parecer.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="flex space-x-3">
+    {% if can_edit %}
+    <a href="{{ url_for('editar_parecer', parecer_id=parecer.id) }}" 
+       class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+        Editar
+    </a>
+    {% endif %}
+    {% if can_advance and parecer.can_advance() %}
+    <form method="POST" action="{{ url_for('avancar_parecer', parecer_id=parecer.id) }}" class="inline">
+        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+            Avançar para "{{ parecer.STAGE_LABELS[parecer.get_next_stage()] }}"
+        </button>
+    </form>
+    {% endif %}
+    {% if can_advance and parecer.can_go_back() %}
+    <form method="POST" action="{{ url_for('voltar_parecer', parecer_id=parecer.id) }}" class="inline">
+        <button type="submit" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition">
+            Voltar para "{{ parecer.STAGE_LABELS[parecer.get_previous_stage()] }}"
+        </button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('index') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
+        Voltar para Dashboard
+    </a>
+    {% if can_delete %}
+    <form method="POST" action="{{ url_for('excluir_parecer', parecer_id=parecer.id) }}" class="inline" 
+          onsubmit="return confirm('Tem certeza que deseja excluir este parecer?');">
+        <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            Excluir
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

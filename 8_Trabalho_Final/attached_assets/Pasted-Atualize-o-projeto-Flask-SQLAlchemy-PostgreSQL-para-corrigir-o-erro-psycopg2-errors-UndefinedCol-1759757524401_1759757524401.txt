@@ -1,0 +1,33 @@
+Atualize o projeto Flask (SQLAlchemy + PostgreSQL) para corrigir o erro psycopg2.errors.UndefinedColumn: column pareceres.id_elaborador does not exist, garantindo a criação e uso correto da coluna id_elaborador na tabela pareceres.
+
+Modelo: no modelo Formulario (tabela pareceres), adicione o campo
+
+id_elaborador = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=True, index=True)
+elaborador = db.relationship("Usuario", foreign_keys=[id_elaborador])
+
+
+Se ainda não existir, mantenha também id_revisor e revisor.
+
+Migração automática: ao iniciar a aplicação, verifique se a coluna id_elaborador existe na tabela pareceres; se não existir, execute automaticamente o comando SQL
+
+ALTER TABLE pareceres ADD COLUMN id_elaborador INTEGER NULL;
+ALTER TABLE pareceres ADD CONSTRAINT fk_pareceres_id_elaborador_usuario
+FOREIGN KEY (id_elaborador) REFERENCES usuario(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS ix_pareceres_id_elaborador ON pareceres(id_elaborador);
+
+
+Faça isso usando sqlalchemy.text dentro de app.app_context() após db.create_all(), garantindo que a operação seja idempotente.
+
+Preenchimento automático: ao salvar a etapa “Em Elaboração”, se id_elaborador estiver None, defina automaticamente como o current_user.id (usuário logado).
+
+if formulario.status_formulario == "ELABORACAO" and formulario.id_elaborador is None:
+    formulario.id_elaborador = current_user.id
+
+
+Exibição: nos templates dos painéis (/dashboard, /meus-pareceres, /historico), adicione a coluna “Parecerista Elaborador” que exibe {{ f.elaborador.nome if f.elaborador else 'Não informado' }}.
+
+Banco e segurança: se o campo não existir em instâncias antigas, o código deve criá-lo automaticamente sem quebrar a aplicação; use reflection.Inspector do SQLAlchemy para checar colunas antes de executar o ALTER TABLE.
+
+Teste: ao reiniciar o app, a tabela pareceres deve incluir id_elaborador, a rota /dashboard deve carregar normalmente, e a coluna “Parecerista Elaborador” deve ser exibida nas listagens.
+
+README: atualize explicando que a aplicação agora cria automaticamente a coluna id_elaborador e preenche com o usuário que realiza a etapa “Em Elaboração”.

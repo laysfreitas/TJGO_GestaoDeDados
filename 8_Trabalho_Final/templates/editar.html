@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Parecer - Natjus{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Editar Parecer #{{ parecer.id }}</h1>
+    <p class="text-gray-600 mt-2">Estágio atual: <span class="font-semibold">{{ parecer.STAGE_LABELS[parecer.status_formulario] }}</span></p>
+</div>
+
+<div class="bg-white rounded-lg shadow-md">
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex">
+            <button onclick="showTab('iniciado')" id="tab-iniciado"
+                    class="tab-button px-6 py-4 text-sm font-medium border-b-2 {% if parecer.status_formulario == StatusFormulario.INICIADO %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                Iniciado
+            </button>
+            <button onclick="showTab('elaboracao')" id="tab-elaboracao"
+                    class="tab-button px-6 py-4 text-sm font-medium border-b-2 {% if parecer.status_formulario == StatusFormulario.ELABORACAO %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}"
+                    {% if parecer.status_formulario == StatusFormulario.INICIADO %}disabled{% endif %}>
+                Em elaboração
+            </button>
+            <button onclick="showTab('revisao')" id="tab-revisao"
+                    class="tab-button px-6 py-4 text-sm font-medium border-b-2 {% if parecer.status_formulario == StatusFormulario.REVISAO %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}"
+                    {% if parecer.status_formulario.value in ['INICIADO', 'ELABORACAO'] %}disabled{% endif %}>
+                Em revisão
+            </button>
+            <button onclick="showTab('envio')" id="tab-envio"
+                    class="tab-button px-6 py-4 text-sm font-medium border-b-2 {% if parecer.status_formulario == StatusFormulario.PRONTO_ENVIO %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}"
+                    {% if parecer.status_formulario != StatusFormulario.PRONTO_ENVIO %}disabled{% endif %}>
+                Pronto para envio
+            </button>
+        </nav>
+    </div>
+
+    <form method="POST" action="{{ url_for('editar_parecer', parecer_id=parecer.id) }}" enctype="multipart/form-data" class="p-6">
+        <div id="content-iniciado" class="tab-content">
+            <h3 class="text-lg font-semibold mb-4">Dados Iniciais</h3>
+            {% if not user_permissions.can_edit_iniciado %}
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                ⚠️ Você não tem permissão para editar esta seção. Os campos estão somente leitura.
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nº do Processo</label>
+                    <input type="text" name="n_processo" value="{{ parecer.n_processo or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Interessado</label>
+                    <input type="text" name="interessado" value="{{ parecer.interessado or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Magistrado</label>
+                    <input type="text" name="magistrado" value="{{ parecer.magistrado or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Comarca</label>
+                    <input type="text" name="comarca" value="{{ parecer.comarca or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Serventia</label>
+                    <input type="text" name="serventia" value="{{ parecer.serventia or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data de Despacho</label>
+                    <input type="date" name="dt_despacho" value="{{ parecer.dt_despacho.strftime('%Y-%m-%d') if parecer.dt_despacho else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data de Encaminhamento</label>
+                    <input type="date" name="dt_encaminhamento" value="{{ parecer.dt_encaminhamento.strftime('%Y-%m-%d') if parecer.dt_encaminhamento else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Encaminhamento</label>
+                    <input type="time" name="hr_encaminhamento" value="{{ parecer.hr_encaminhamento.strftime('%H:%M') if parecer.hr_encaminhamento else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data de Recebimento</label>
+                    <input type="date" name="dt_recebimento" value="{{ parecer.dt_recebimento.strftime('%Y-%m-%d') if parecer.dt_recebimento else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Recebimento</label>
+                    <input type="time" name="hr_recebimento" value="{{ parecer.hr_recebimento.strftime('%H:%M') if parecer.hr_recebimento else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_iniciado %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_iniciado %}readonly{% endif %}>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-elaboracao" class="tab-content hidden">
+            <h3 class="text-lg font-semibold mb-4">Dados de Elaboração</h3>
+            {% if not user_permissions.can_edit_elaboracao %}
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                ⚠️ Você não tem permissão para editar esta seção. Os campos estão somente leitura.
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prazo</label>
+                    <select name="id_prazo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_elaboracao %}bg-gray-100{% endif %}"
+                            {% if not user_permissions.can_edit_elaboracao %}disabled{% endif %}>
+                        <option value="">Selecione um prazo</option>
+                        {% for prazo in prazos %}
+                        <option value="{{ prazo.id }}" {% if parecer.id_prazo == prazo.id %}selected{% endif %}>{{ prazo.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade de Objetos</label>
+                    <input type="number" name="qt_objetos" value="{{ parecer.qt_objetos or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_elaboracao %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_elaboracao %}readonly{% endif %}>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nota Técnica</label>
+                    <textarea name="nota_tecnica" rows="4"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_elaboracao %}bg-gray-100{% endif %}"
+                              {% if not user_permissions.can_edit_elaboracao %}readonly{% endif %}>{{ parecer.nota_tecnica or '' }}</textarea>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">PDF da Nota Técnica</label>
+                    {% if parecer.nota_tecnica_pdf %}
+                    <div class="mb-2">
+                        <a href="{{ url_for('download_file', filename=parecer.nota_tecnica_pdf) }}" 
+                           class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm">
+                            📄 {{ parecer.nota_tecnica_pdf }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if user_permissions.can_edit_elaboracao %}
+                    <input type="file" name="nota_tecnica_pdf" accept=".pdf"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">Apenas arquivos PDF (máximo 16MB)</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="content-revisao" class="tab-content hidden">
+            <h3 class="text-lg font-semibold mb-4">Dados de Revisão</h3>
+            {% if not user_permissions.can_edit_revisao %}
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                ⚠️ Você não tem permissão para editar esta seção. Os campos estão somente leitura.
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Revisor</label>
+                    <select name="id_revisor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_revisao %}bg-gray-100{% endif %}"
+                            {% if not user_permissions.can_edit_revisao %}disabled{% endif %}>
+                        <option value="">Selecione um revisor</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if parecer.id_revisor == usuario.id %}selected{% endif %}>{{ usuario.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data de Revisão</label>
+                    <input type="date" name="dt_revisao" value="{{ parecer.dt_revisao.strftime('%Y-%m-%d') if parecer.dt_revisao else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_revisao %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_revisao %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Revisão</label>
+                    <input type="time" name="hr_revisao" value="{{ parecer.hr_revisao.strftime('%H:%M') if parecer.hr_revisao else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_revisao %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_revisao %}readonly{% endif %}>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-envio" class="tab-content hidden">
+            <h3 class="text-lg font-semibold mb-4">Dados de Envio</h3>
+            {% if not user_permissions.can_edit_pronto_envio %}
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                ⚠️ Você não tem permissão para editar esta seção. Os campos estão somente leitura.
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Responsável pelo Envio</label>
+                    <select name="id_responsavel_envio" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_pronto_envio %}bg-gray-100{% endif %}"
+                            {% if not user_permissions.can_edit_pronto_envio %}disabled{% endif %}>
+                        <option value="">Selecione um responsável</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if parecer.id_responsavel_envio == usuario.id %}selected{% endif %}>{{ usuario.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data de Envio</label>
+                    <input type="date" name="dt_envio" value="{{ parecer.dt_envio.strftime('%Y-%m-%d') if parecer.dt_envio else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_pronto_envio %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_pronto_envio %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Envio</label>
+                    <input type="time" name="hr_envio" value="{{ parecer.hr_envio.strftime('%H:%M') if parecer.hr_envio else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_pronto_envio %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_pronto_envio %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Forma de Envio</label>
+                    <input type="text" name="forma_envio" value="{{ parecer.forma_envio or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_pronto_envio %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_pronto_envio %}readonly{% endif %}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email para Envio</label>
+                    <input type="email" name="forma_envio_email" value="{{ parecer.forma_envio_email or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if not user_permissions.can_edit_pronto_envio %}bg-gray-100{% endif %}"
+                           {% if not user_permissions.can_edit_pronto_envio %}readonly{% endif %}>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200 flex space-x-3">
+            {% set can_save = current_user.can_edit_stage(parecer.status_formulario) %}
+            <button type="submit" 
+                    class="px-6 py-2 rounded-lg transition {% if can_save %}bg-blue-600 text-white hover:bg-blue-700{% else %}bg-gray-300 text-gray-500 cursor-not-allowed{% endif %}"
+                    {% if not can_save %}disabled{% endif %}>
+                Salvar
+            </button>
+            <a href="{{ url_for('visualizar_parecer', parecer_id=parecer.id) }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function showTab(tabName) {
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(button => {
+        button.classList.remove('border-blue-500', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    const activeButton = document.getElementById('tab-' + tabName);
+    activeButton.classList.remove('border-transparent', 'text-gray-500');
+    activeButton.classList.add('border-blue-500', 'text-blue-600');
+}
+
+window.onload = function() {
+    {% if parecer.status_formulario == StatusFormulario.INICIADO %}
+        showTab('iniciado');
+    {% elif parecer.status_formulario == StatusFormulario.ELABORACAO %}
+        showTab('elaboracao');
+    {% elif parecer.status_formulario == StatusFormulario.REVISAO %}
+        showTab('revisao');
+    {% elif parecer.status_formulario == StatusFormulario.PRONTO_ENVIO %}
+        showTab('envio');
+    {% endif %}
+};
+</script>
+{% endblock %}
